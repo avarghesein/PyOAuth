@@ -11,19 +11,20 @@ class MockResponse:
     ) -> None:
         self._json = json
         self._text = text or str(json)
+        self.text = self._text
         self.status = status
         self.status_code = status
 
     def json(self):
         return self._json
 
-    def text(self):
+    def text1(self):
         return self._text
 
-    async def __aenter__(self):
+    def __aenter__(self):
         return self
 
-    async def __aexit__(self, exc_type, exc_value, traceback):
+    def __aexit__(self, exc_type, exc_value, traceback):
         pass
 
 
