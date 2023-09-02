@@ -483,6 +483,7 @@ class OAuthClient:
         accessToken = await self.getAccessToken()
         return await (await self.getOidcCore()).fetchUserInfo(accessToken)
 
+    """Fetch the Users from the OAuth Server through Management API"""
     async def fetchUserList(self,resource: str = ""):
         """
         Fetch the user information from the UserInfo endpoint. If the access token
