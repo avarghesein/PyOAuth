@@ -9,3 +9,8 @@
 * Create a Python Virtual Environment and install the packages mentioned in ['requirements.txt'](https://github.com/avarghesein/PyOAuth/blob/main/PyOAuthTest/requirements.txt)
 * Update your OAuth Server details in [DemoWebServer](https://github.com/avarghesein/PyOAuth/blob/main/PyOAuthTest/DemoWebServer.py)
 * Run DemoWebServer
+
+## References
+  [SelfHosting OAuth Server](https://github.com/logto-io/logto/blob/master/docker-compose.yml)
+  
+  [Logto Python Client](https://github.com/logto-io/python/tree/master)
