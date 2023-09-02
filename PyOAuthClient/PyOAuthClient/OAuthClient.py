@@ -1,7 +1,3 @@
-"""
-The Logto client class and the related models.
-"""
-
 import time
 from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
