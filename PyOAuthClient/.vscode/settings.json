@@ -1,0 +1,16 @@
+{
+  "python.defaultInterpreterPath": "/media/DATA/DEV/PyEnv/pyenv_3.10.6/bin/python",
+  
+  "editor.minimap.enabled": false,
+  
+  "files.watcherExclude": {
+      "**/": true
+  },
+
+  "python.envFile": "${workspaceFolder}/.pythonenv",
+
+  "python.linting.pylintEnabled": true,
+  "python.linting.pylintArgs": [ "--enable=W0614" ],
+
+  "python.jediEnabled": true
+}

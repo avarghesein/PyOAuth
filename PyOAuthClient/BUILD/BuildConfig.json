@@ -1,0 +1,23 @@
+{
+    "BLD_LEVEL": 3,
+    "SRC_DIR":"..",
+    "SKIP_DIRS" : ".git,.vscode,dist,dist/output",
+    "BLD_DIR":"../DIST/",
+    "PACKAGE_NAME":"PyOAuthClient",
+    "ENTRY_POINT":"PyOAuthClient.Main:Main",
+
+    "NO_COMPILE" : "YES",
+    
+    "RESOURCES": [
+    ],
+
+    "INTERNAL_RESOURCES": [
+    ],
+
+    "PRE_COMPILE_REQUIREMENTS" : "NO",
+    "EXTRACT_REQUIREMENTS" : "NO",
+
+    "RENAME_OBJ_FILES": [".cpython-38.pyc"],   
+
+    "CLEANUP_OBJ_FILES": "YES"
+}
