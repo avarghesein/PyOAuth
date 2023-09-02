@@ -1,3 +1,5 @@
+"""OAuthClientWrapper"""
+
 import time
 from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
