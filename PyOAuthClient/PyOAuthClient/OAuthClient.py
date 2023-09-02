@@ -388,6 +388,7 @@ class OAuthClient:
         await self._handleTokenResponse("", tokenResponse)
         self._storage.delete("signInSession")
 
+    """Admin Access Token for Management API Calls"""
     async def getAdminAccessToken(self, resource: str = "") -> Optional[str]:
             """
             Get the access token for the given resource. If the access token is expired,

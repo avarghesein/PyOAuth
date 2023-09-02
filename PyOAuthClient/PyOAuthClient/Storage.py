@@ -1,4 +1,4 @@
-"""Storage Provider"""
+"""Storage Provider for OAuth keys, Use Server Sessions for Persistant Storage"""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Literal, Optional
