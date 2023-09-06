@@ -1,9 +1,11 @@
 import os
 
+from typing import Dict, Literal, Optional
 
 import sys
 libPath = f"./LIB/PyOAuthClient.pyz"
 sys.path.insert(0,libPath )
+
 from PyOAuthClient import OAuthClient, OAuthConfig, OAuthException, Storage
 
 from fastapi import Request, Response
@@ -19,23 +21,23 @@ app.add_middleware(SessionMiddleware, secret_key="secret", cookie_name="cookie22
 session = None
 
 class SessionStorage(Storage):
-    def get(self, key: str) -> str:
-        return session.get(key, None)
+    def get(self, key: str, callerArgs: Optional[dict]) -> str:
+        return callerArgs["session"].get(key, None)
 
-    def set(self, key: str, value: str) -> None:
-        session[key] = value
+    def set(self, key: str, value: str, callerArgs: Optional[dict]) -> None:
+        callerArgs["session"][key] = value
 
-    def delete(self, key: str) -> None:
-        session.pop(key, None)
+    def delete(self, key: str, callerArgs: Optional[dict]) -> None:
+        callerArgs["session"].pop(key, None)
 
 
 adminClient = OAuthClient(
     OAuthConfig(
-        endpoint="https://<Your OAuthServer IP or DNS>:3001",  # Replace with your Logto endpoint
-        appId="Your admin app id",
-        appSecret="Your admin app secret",
+        endpoint="<Your OAuth End Point>",
+        appId="<Your OAuth ADMIN APP ID>",
+        appSecret="<Your OAuth ADMIN APP Secret>",
         resources=[
-            "https://default.logto.app/api Or Your management application url",
+            "https://default.logto.app/api or <Your Admin Appliction Resource Url>",
         ],  # Remove if you don't need to access the default Logto API
         scopes=["all"],
     ),
@@ -44,13 +46,13 @@ adminClient = OAuthClient(
 
 client = OAuthClient(
     OAuthConfig(
-        endpoint="https://<Your OAuthServer IP or DNS>:3001",  # Replace with your Logto endpoint
-        appId="your app id",
-        appSecret="your app secret",
+        endpoint="<Your OAuth End Point>",
+        appId="<Your OAuth ADMIN APP ID>",
+        appSecret="<Your OAuth ADMIN APP Secret>",
         resources=[
-            "https://<Your Protected API Resource>",
+            "<Your Appliction Resource Url>",
         ],  # Remove if you don't need to access the default Logto API
-        scopes=["email","custom_data", "custom:permission"],
+        scopes=["email","custom_data", "chat:collection"],
     ),
     SessionStorage(),
 )
@@ -61,24 +63,25 @@ from fastapi.responses import HTMLResponse
 async def index(request: Request):
     try:
         global session
-        session = request.session
+        callerArgs = { "session" : request.session }
 
         content = ""
         
-        userList = await adminClient.fetchUserList("https://default.logto.app/api")
+        userList = await adminClient.fetchUserList("<Your Admin Appliction Resource Url>",callerArgs)
 
-        if client.isAuthenticated() is False:
-            content = "Not authenticated <a href='/sign-in'>Sign in</a>"
+        if client.isAuthenticated(callerArgs = callerArgs) is False:
+            content = "Not authenticated <a href='/signin'>Sign in</a>"
         else:
+            callerArgs = { "session" : request.session }
             content = (
-            (await client.fetchUserInfo()).model_dump_json(exclude_unset=True)
+            (await client.fetchUserInfo(callerArgs = callerArgs)).model_dump_json(exclude_unset=True)
             + "<br>"
-            + client.getIdTokenClaims().model_dump_json(exclude_unset=True)
+            + client.getIdTokenClaims(callerArgs = callerArgs).model_dump_json(exclude_unset=True)
             + "<br>"
             + str(userList)
             + "<br>"
             + (
-                await client.getAccessTokenClaims("https://<Your Protected API Resource>")
+                await client.getAccessTokenClaims("<Your Appliction Resource Url>",callerArgs)
             ).model_dump_json(exclude_unset=True)
             + "<br><a href='/sign-out'>Sign out</a>")
     except OAuthException as e:
@@ -86,32 +89,33 @@ async def index(request: Request):
 
     return HTMLResponse(content="<html><body>" + content+ "</html></body>", status_code=200)
 
-@app.get("/sign-in")
+@app.get("/signin")
 async def sign_in(request: Request):
     global session
-    session = request.session
+    callerArgs = { "session" : request.session }
     return RedirectResponse(
         await client.signIn(
-            redirectUri="http://<Your OAuthServer IP or DNS>:5000/callback", interactionMode="signUp"
+            redirectUri= request.base_url._url + "signin_callback",
+            interactionMode="signUp",
+            callerArgs = callerArgs
         )
     )
 
-
-@app.get("/sign-out")
+@app.get("/signout")
 async def sign_out(request: Request):
     global session
-    session = request.session
+    callerArgs = { "session" : request.session }
     return RedirectResponse(
-        await client.signOut(postLogoutRedirectUri="http://<Your OAuthServer IP or DNS>:5000/")
+        await client.signOut(postLogoutRedirectUri = request.base_url._url + "signin_callback", callerArgs = callerArgs)
     )
 
 
-@app.get("/callback")
+@app.get("/signin_callback")
 async def callback(request: Request):
     try:
         global session
-        session = request.session
-        await client.handleSignInCallback(request.url._url)
+        callerArgs = { "session" : request.session }
+        await client.handleSignInCallback(request.url._url, callerArgs = callerArgs)
         return RedirectResponse("/")
     except OAuthException as e:
         return str(e)
@@ -120,7 +124,9 @@ def Main():
     import uvicorn
     uvicorn.run("DemoWebServer:app",
                 host="0.0.0.0",
-                port=5000)
+                port=5000,
+                ssl_keyfile="<SSL Key File Path>",
+                ssl_certfile="<SSL Cert File Path>")
 
 if __name__ == "__main__":
     Main()

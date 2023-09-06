@@ -1,5 +1,6 @@
 """OAuthClientWrapper"""
 
+from typing import Dict, Literal, Optional
 import time
 from typing import Dict, List, Literal, Optional, Union
 from pydantic import BaseModel
@@ -157,42 +158,42 @@ class OAuthClient:
 
         return self._oidcCore
 
-    def _getAccessTokenMap(self) -> AccessTokenMap:
+    def _getAccessTokenMap(self, callerArgs: dict = {}) -> AccessTokenMap:
         """
         Get the access token map from storage.
         """
-        accessTokenMap = self._storage.get("accessTokenMap")
+        accessTokenMap = self._storage.get("accessTokenMap", callerArgs)
         try:
             return AccessTokenMap.model_validate_json(accessTokenMap)
         except:
             return AccessTokenMap(x={})
 
-    def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int) -> None:
+    def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int, callerArgs: dict = {}) -> None:
         """
         Set the access token for the given resource to storage.
         """
-        accessTokenMap = self._getAccessTokenMap()
+        accessTokenMap = self._getAccessTokenMap(callerArgs)
         accessTokenMap.x[resource] = AccessToken(
             token=accessToken,
             expiresAt=int(time.time())
             + expiresIn
             - 60,  # 60 seconds earlier to avoid clock skew
         )
-        self._storage.set("accessTokenMap", accessTokenMap.model_dump_json())
+        self._storage.set("accessTokenMap", accessTokenMap.model_dump_json(), callerArgs)
 
-    def _getAccessToken(self, resource: str) -> Optional[str]:
+    def _getAccessToken(self, resource: str, callerArgs: dict = {}) -> Optional[str]:
         """
         Get the valid access token for the given resource from storage, no refresh will be
         performed.
         """
-        accessTokenMap = self._getAccessTokenMap()
+        accessTokenMap = self._getAccessTokenMap(callerArgs)
         accessToken = accessTokenMap.x.get(resource, None)
         if accessToken is None or accessToken.expiresAt < int(time.time()):
             return None
         return accessToken.token
 
     async def _handleTokenResponse(
-        self, resource: str, tokenResponse: TokenResponse
+        self, resource: str, tokenResponse: TokenResponse, callerArgs: dict = {}
     ) -> None:
         """
         Handle the token response from the Logto server and store the tokens to storage.
@@ -204,13 +205,13 @@ class OAuthClient:
             (await self.getOidcCore()).verifyIdToken(
                 tokenResponse.id_token, self.config.appId
             )
-            self._storage.set("idToken", tokenResponse.id_token)
+            self._storage.set("idToken", tokenResponse.id_token, callerArgs)
 
         if tokenResponse.refresh_token is not None:
-            self._storage.set("refreshToken", tokenResponse.refresh_token)
+            self._storage.set("refreshToken", tokenResponse.refresh_token, callerArgs)
 
         self._setAccessToken(
-            resource, tokenResponse.access_token, tokenResponse.expires_in
+            resource, tokenResponse.access_token, tokenResponse.expires_in, callerArgs
         )
 
     async def _buildSignInUrl(
@@ -218,7 +219,7 @@ class OAuthClient:
         redirectUri: str,
         codeChallenge: str,
         state: str,
-        interactionMode: Optional[InteractionMode] = None,
+        interactionMode: Optional[InteractionMode] = None, callerArgs: dict = {}
     ) -> str:
         appId, prompt, resources, scopes = (
             self.config.appId,
@@ -251,12 +252,12 @@ class OAuthClient:
         )
         return f"{authorizationEndpoint}?{query}"
 
-    def _getSignInSession(self) -> Optional[SignInSession]:
+    def _getSignInSession(self, callerArgs: dict = {}) -> Optional[SignInSession]:
         """
         Try to parse the current sign-in session from storage. If the value does not
         exist or parse failed, return None.
         """
-        signInSession = self._storage.get("signInSession")
+        signInSession = self._storage.get("signInSession", callerArgs)
         if signInSession is None:
             return None
         try:
@@ -264,11 +265,11 @@ class OAuthClient:
         except:
             return None
 
-    def _setSignInSession(self, signInSession: SignInSession) -> None:
-        self._storage.set("signInSession", signInSession.model_dump_json())
+    def _setSignInSession(self, signInSession: SignInSession, callerArgs: dict = {}) -> None:
+        self._storage.set("signInSession", signInSession.model_dump_json(), callerArgs)
 
     async def signIn(
-        self, redirectUri: str, interactionMode: Optional[InteractionMode] = None
+        self, redirectUri: str, interactionMode: Optional[InteractionMode] = None, callerArgs: dict = {}
     ) -> str:
         """
         Returns the sign-in URL for the given redirect URI. You should redirect the user
@@ -287,22 +288,22 @@ class OAuthClient:
         codeChallenge = OAuthCore.generateCodeChallenge(codeVerifier)
         state = OAuthCore.generateState()
         signInUrl = await self._buildSignInUrl(
-            redirectUri, codeChallenge, state, interactionMode
+            redirectUri, codeChallenge, state, interactionMode, callerArgs
         )
 
         self._setSignInSession(
             SignInSession(
                 redirectUri=redirectUri,
                 codeVerifier=codeVerifier,
-                state=state,
-            )
+                state=state
+            ),callerArgs
         )
         for key in ["idToken", "accessToken", "refreshToken"]:
-            self._storage.delete(key)
+            self._storage.delete(key, callerArgs)
 
         return signInUrl
 
-    async def signOut(self, postLogoutRedirectUri: Optional[str] = None) -> str:
+    async def signOut(self, postLogoutRedirectUri: Optional[str] = None, callerArgs: dict = {}) -> str:
         """
         Returns the sign-out URL for the given post-logout redirect URI. You should
         redirect the user to the returned URL to sign out.
@@ -320,9 +321,9 @@ class OAuthClient:
           return redirect(await client.signOut('https://example.com'))
           ```
         """
-        self._storage.delete("idToken")
-        self._storage.delete("refreshToken")
-        self._storage.delete("accessTokenMap")
+        self._storage.delete("idToken", callerArgs)
+        self._storage.delete("refreshToken", callerArgs)
+        self._storage.delete("accessTokenMap", callerArgs)
 
         endSessionEndpoint = (await self.getOidcCore()).metadata.end_session_endpoint
 
@@ -344,12 +345,12 @@ class OAuthClient:
             )
         )
 
-    async def handleSignInCallback(self, callbackUri: str) -> None:
+    async def handleSignInCallback(self, callbackUri: str, callerArgs: dict = {}) -> None:
         """
         Handle the sign-in callback from the Logto server. This method should be called
         in the callback route handler of your application.
         """
-        signInSession = self._getSignInSession()
+        signInSession = self._getSignInSession( callerArgs)
 
         if signInSession is None:
             raise OAuthException("Sign-in session not found")
@@ -385,17 +386,16 @@ class OAuthClient:
             codeVerifier=signInSession.codeVerifier,
         )
 
-        await self._handleTokenResponse("", tokenResponse)
-        self._storage.delete("signInSession")
+        await self._handleTokenResponse("", tokenResponse, callerArgs)
+        self._storage.delete("signInSession", callerArgs)
 
-    """Admin Access Token for Management API Calls"""
-    async def getAdminAccessToken(self, resource: str = "") -> Optional[str]:
+    async def getAdminAccessToken(self, resource: str, callerArgs: dict = {}) -> Optional[str]:
             """
             Get the access token for the given resource. If the access token is expired,
             it will be refreshed automatically. If no refresh token is found, None will
             be returned.
             """
-            accessToken = self._getAccessToken(resource)
+            accessToken = self._getAccessToken(resource, callerArgs)
             if accessToken is not None:
                 return accessToken
 
@@ -409,20 +409,20 @@ class OAuthClient:
                     )
             )
 
-            await self._handleTokenResponse(resource, tokenResponse)
+            await self._handleTokenResponse(resource, tokenResponse, callerArgs)
             return tokenResponse.access_token
 
-    async def getAccessToken(self, resource: str = "") -> Optional[str]:
+    async def getAccessToken(self, resource: str, callerArgs: dict = {}) -> Optional[str]:
         """
         Get the access token for the given resource. If the access token is expired,
         it will be refreshed automatically. If no refresh token is found, None will
         be returned.
         """
-        accessToken = self._getAccessToken(resource)
+        accessToken = self._getAccessToken(resource, callerArgs)
         if accessToken is not None:
             return accessToken
 
-        refreshToken = self._storage.get("refreshToken")
+        refreshToken = self._storage.get("refreshToken", callerArgs)
         if refreshToken is None:
             return None
 
@@ -430,64 +430,64 @@ class OAuthClient:
             clientId=self.config.appId,
             clientSecret=self.config.appSecret,
             refreshToken=refreshToken,
-            resource=resource,
+            resource=resource
         )
 
-        await self._handleTokenResponse(resource, tokenResponse)
+        await self._handleTokenResponse(resource, tokenResponse, callerArgs)
         return tokenResponse.access_token
 
-    async def getAccessTokenClaims(self, resource: str = "") -> AccessTokenClaims:
+    async def getAccessTokenClaims(self, resource: str = "", callerArgs: dict = {}) -> AccessTokenClaims:
         """
         Get the claims in the access token for the given resource. If the access token
         is expired, it will be refreshed automatically. If it's unable to refresh the
         access token, an exception will be thrown.
         """
-        accessToken = await self.getAccessToken(resource)
+        accessToken = await self.getAccessToken(resource, callerArgs)
         return OAuthCore.decodeAccessToken(accessToken)
 
-    def getIdToken(self) -> Optional[str]:
+    def getIdToken(self, callerArgs: dict = {}) -> Optional[str]:
         """
         Get the ID Token string. If you need to get the claims in the ID Token, use
         `getIdTokenClaims` instead.
         """
-        return self._storage.get("idToken")
+        return self._storage.get("idToken", callerArgs)
 
-    def getIdTokenClaims(self) -> IdTokenClaims:
+    def getIdTokenClaims(self, callerArgs: dict = {}) -> IdTokenClaims:
         """
         Get the claims in the ID Token. If the ID Token does not exist, an exception
         will be thrown.
         """
-        idToken = self._storage.get("idToken")
+        idToken = self._storage.get("idToken", callerArgs)
         if idToken is None:
             raise OAuthException("ID Token not found")
 
         return OAuthCore.decodeIdToken(idToken)
 
-    def getRefreshToken(self) -> Optional[str]:
+    def getRefreshToken(self, callerArgs: dict = {}) -> Optional[str]:
         """
         Get the refresh token string.
         """
-        return self._storage.get("refreshToken")
+        return self._storage.get("refreshToken", callerArgs)
 
-    def isAuthenticated(self) -> bool:
+    def isAuthenticated(self, callerArgs: dict = {}) -> bool:
         """
         Check if the user is authenticated by checking if the ID Token exists.
         """
-        return self._storage.get("idToken") is not None
+        return self._storage.get("idToken", callerArgs) is not None
 
-    async def fetchUserInfo(self) -> UserInfoResponse:
+    async def fetchUserInfo(self, callerArgs: dict = {}) -> UserInfoResponse:
         """
         Fetch the user information from the UserInfo endpoint. If the access token
         is expired, it will be refreshed automatically.
         """
-        accessToken = await self.getAccessToken()
+        accessToken = await self.getAccessToken("", callerArgs)
         return await (await self.getOidcCore()).fetchUserInfo(accessToken)
 
     """Fetch the Users from the OAuth Server through Management API"""
-    async def fetchUserList(self,resource: str = ""):
+    async def fetchUserList(self,resource: str = "", callerArgs: dict = {}):
         """
         Fetch the user information from the UserInfo endpoint. If the access token
         is expired, it will be refreshed automatically.
         """
-        accessToken = await self.getAdminAccessToken(resource)
+        accessToken = await self.getAdminAccessToken(resource, callerArgs)
         return await (await self.getOidcCore()).fetchUserList(accessToken)

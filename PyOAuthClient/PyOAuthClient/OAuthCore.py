@@ -144,7 +144,7 @@ class OAuthCore:
                 })
             
             if response.status_code != 200:
-                raise OAuthException(response.text)
+                raise OAuthException(resp.text)
             
             jsonData = response.json()
             return TokenResponse(**jsonData)
