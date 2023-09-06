@@ -1,6 +1,6 @@
 class OAuthException(Exception):
     """
-    The exception class to identify the exceptions from the Logto client.
+    The exception class to identify the exceptions from the OAuth client.
     """
 
     pass

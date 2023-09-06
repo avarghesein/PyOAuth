@@ -20,8 +20,6 @@ services:
       - ADMIN_ENDPOINT=https://<your VM's public IP or DNS Name>:3002
       - HTTPS_CERT_PATH=/shared/self.crt
       - HTTPS_KEY_PATH=/shared/self.key
-      # Mandatory for GitPod to map host env to the container, thus GitPod can dynamically configure the public URL of Logto;
-      # Or, you can leverage it for local testing.
     volumes:
       - type: bind
         source: /home/<yourusername>

@@ -1,6 +1,4 @@
-"""
-Logto client storage abstract class and the default implementation.
-"""
+"""Storage Provider for OAuth keys, Use Server Sessions for Persistant Storage"""
 
 from abc import ABC, abstractmethod
 from typing import Dict, Literal, Optional
@@ -13,11 +11,11 @@ The keys literal for the persistent storage.
 
 class Storage(ABC):
     """
-    The storage interface for the Logto client. Logto client will use this
-    interface to store and retrieve the logto session data.
+    The storage interface for the OAuth client. OAuthclient will use this
+    interface to store and retrieve the session data.
 
     Usually this should be implemented as a persistent storage, such as a
-    session or a database, since the page will be redirected to Logto and
+    session or a database, since the page will be redirected to OAuthServer and
     then back to the original page.
     """
 
@@ -45,7 +43,7 @@ class Storage(ABC):
 
 class MemoryStorage(Storage):
     """
-    The in-memory storage implementation for the Logto client. Note this should
+    The in-memory storage implementation for the OAuth client. Note this should
     only be used for testing, since the data will be lost after the page is
     redirected.
 

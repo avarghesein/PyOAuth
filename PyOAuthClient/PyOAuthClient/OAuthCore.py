@@ -1,5 +1,5 @@
 """
-The core OIDC functions for the Logto client. Provider-agonistic functions
+The core OIDC functions for the OAuth client. Provider-agonistic functions
 are implemented as static methods, while other functions are implemented as
 instance methods.
 """
@@ -144,7 +144,7 @@ class OAuthCore:
                 })
             
             if response.status_code != 200:
-                raise OAuthException(resp.text)
+                raise OAuthException(response.text)
             
             jsonData = response.json()
             return TokenResponse(**jsonData)

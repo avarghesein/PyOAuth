@@ -22,28 +22,28 @@ from PyOAuthClient import removeFalsyKeys
 
 class OAuthConfig(BaseModel):
     """
-    The configuration object for the Logto client.
+    The configuration object for the OAuth client.
     """
 
     endpoint: str
     """
-    The endpoint for the Logto server, you can get it from the integration guide
-    or the team settings page of the Logto Console.
+    The endpoint for the OAuth server, you can get it from the integration guide
+    or the team settings page of the OAuth Console.
 
     Example:
-    https://foo.logto.app
+    https://foo.OAuth.app
     """
 
     appId: str
     """
     The client ID of your application, you can get it from the integration guide
-    or the application details page of the Logto Console.
+    or the application details page of the OAuth Console.
     """
 
     appSecret: Optional[str] = None
     """
     The client secret of your application, you can get it from the integration guide
-    or the application details page of the Logto Console.
+    or the application details page of the OAuth Console.
     """
 
     prompt: Literal["consent", "login"] = "consent"
@@ -61,7 +61,7 @@ class OAuthConfig(BaseModel):
     The API resources that your application needs to access. You can specify multiple
     resources by providing an array of strings.
 
-    See https://docs.logto.io/docs/recipes/rbac/ to learn more about how to use role-based
+    See https://docs.OAuth.io/docs/recipes/rbac/ to learn more about how to use role-based
     access control (RBAC) to protect API resources.
     """
 
@@ -72,7 +72,7 @@ class OAuthConfig(BaseModel):
 
     If resources are specified, scopes will be applied to every resource.
 
-    See https://docs.logto.io/docs/recipes/integrate-logto/vanilla-js/#fetch-user-information
+    See https://docs.OAuth.io/docs/recipes/integrate-OAuth/vanilla-js/#fetch-user-information
     for more information of available scopes for user information.
     """
 
@@ -80,7 +80,7 @@ class OAuthConfig(BaseModel):
 class SignInSession(BaseModel):
     """
     The sign-in session that stores the information for the sign-in callback.
-    Should be stored before redirecting the user to Logto.
+    Should be stored before redirecting the user to OAuth.
     """
 
     redirectUri: str
@@ -128,13 +128,13 @@ class AccessTokenMap(BaseModel):
 InteractionMode = Literal["signIn", "signUp"]
 """
 The interaction mode for the sign-in request. Note this is not a part of the OIDC
-specification, but a Logto extension.
+specification, but a OAuth extension.
 """
 
 
 class OAuthClient:
     """
-    The main class of the Logto client. You should create an instance of this class
+    The main class of the OAuth client. You should create an instance of this class
     and use it to sign in, sign out, get access token, etc.
     """
 
@@ -196,7 +196,7 @@ class OAuthClient:
         self, resource: str, tokenResponse: TokenResponse, callerArgs: dict = {}
     ) -> None:
         """
-        Handle the token response from the Logto server and store the tokens to storage.
+        Handle the token response from the OAuth server and store the tokens to storage.
 
         Resource can be an empty string, which means the access token is for UserInfo
         endpoint or the default resource.
@@ -308,13 +308,13 @@ class OAuthClient:
         Returns the sign-out URL for the given post-logout redirect URI. You should
         redirect the user to the returned URL to sign out.
 
-        If the post-logout redirect URI is not provided, the Logto default post-logout
+        If the post-logout redirect URI is not provided, the OAuth default post-logout
         redirect URI will be used.
 
         Note:
           If the OpenID Connect server does not support the end session endpoint
           (i.e. OpenID Connect RP-Initiated Logout), the function will throw an
-          exception. Logto supports the end session endpoint.
+          exception. OAuth supports the end session endpoint.
 
         Example:
           ```python
@@ -347,7 +347,7 @@ class OAuthClient:
 
     async def handleSignInCallback(self, callbackUri: str, callerArgs: dict = {}) -> None:
         """
-        Handle the sign-in callback from the Logto server. This method should be called
+        Handle the sign-in callback from the OAuth server. This method should be called
         in the callback route handler of your application.
         """
         signInSession = self._getSignInSession( callerArgs)

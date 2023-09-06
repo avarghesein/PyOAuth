@@ -38,7 +38,7 @@ adminClient = OAuthClient(
         appSecret="<Your OAuth ADMIN APP Secret>",
         resources=[
             "https://default.logto.app/api or <Your Admin Appliction Resource Url>",
-        ],  # Remove if you don't need to access the default Logto API
+        ],  # Remove if you don't need to access the default OAuth API
         scopes=["all"],
     ),
     SessionStorage(),
@@ -51,7 +51,7 @@ client = OAuthClient(
         appSecret="<Your OAuth ADMIN APP Secret>",
         resources=[
             "<Your Appliction Resource Url>",
-        ],  # Remove if you don't need to access the default Logto API
+        ],  # Remove if you don't need to access the default OAuth API
         scopes=["email","custom_data", "chat:collection"],
     ),
     SessionStorage(),
@@ -106,7 +106,7 @@ async def sign_out(request: Request):
     global session
     callerArgs = { "session" : request.session }
     return RedirectResponse(
-        await client.signOut(postLogoutRedirectUri = request.base_url._url + "signin_callback", callerArgs = callerArgs)
+        await client.signOut(postLogoutRedirectUri = request.base_url._url, callerArgs = callerArgs)
     )
 
 
