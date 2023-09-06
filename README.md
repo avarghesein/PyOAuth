@@ -10,6 +10,30 @@
 * Update your OAuth Server details in [DemoWebServer](https://github.com/avarghesein/PyOAuth/blob/main/PyOAuthTest/DemoWebServer.py)
 * Run DemoWebServer
 
+## Custom Argument Support, to Enable Sessions Similar to FastAPI
+
+      @app.get("/signin")  
+      async def sign_in(request: Request):
+        callerArgs = { "session" : request.session }
+        return RedirectResponse(
+            await client.signIn(
+                redirectUri= request.base_url._url + "signin_callback",
+                interactionMode="signUp",
+                callerArgs = callerArgs
+            )
+        )
+    
+      class SessionStorage(Storage):
+  
+        def get(self, key: str, callerArgs: Optional[dict]) -> str:
+            return callerArgs["session"].get(key, None)
+    
+        def set(self, key: str, value: str, callerArgs: Optional[dict]) -> None:
+            callerArgs["session"][key] = value
+    
+        def delete(self, key: str, callerArgs: Optional[dict]) -> None:
+            callerArgs["session"].pop(key, None)
+        
 ## References
   [SelfHosting OAuth Server](https://github.com/logto-io/logto/blob/master/docker-compose.yml)
   
