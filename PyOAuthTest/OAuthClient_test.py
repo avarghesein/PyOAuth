@@ -66,7 +66,7 @@ class TestOAuthClient:
 
         assert (
             url
-            == "https://OAuth.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
         )
 
     async def test_signIn_multipleResources(self, client: OAuthClient) -> None:
@@ -75,7 +75,7 @@ class TestOAuthClient:
 
         assert (
             url
-            == "https://OAuth.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&resource=https%3A%2F%2Fresource1&resource=https%3A%2F%2Fresource2&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=openid+offline_access+profile&resource=https%3A%2F%2Fresource1&resource=https%3A%2F%2Fresource2&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
         )
 
     async def test_signIn_multipleScopes(self, client: OAuthClient) -> None:
@@ -84,7 +84,7 @@ class TestOAuthClient:
 
         assert (
             url
-            == "https://OAuth.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state"
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&prompt=consent&code_challenge=codeChallenge&code_challenge_method=S256&state=state"
         )
 
     async def test_signIn_allConfigs(self, client: OAuthClient) -> None:
@@ -95,7 +95,7 @@ class TestOAuthClient:
 
         assert (
             url
-            == "https://OAuth.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&resource=https%3A%2F%2Fresource1&resource=https%3A%2F%2Fresource2&prompt=login&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
+            == "https://logto.app/oidc/auth?client_id=replace-with-your-app-id&redirect_uri=redirectUri&response_type=code&scope=email+phone+openid+offline_access+profile&resource=https%3A%2F%2Fresource1&resource=https%3A%2F%2Fresource2&prompt=login&code_challenge=codeChallenge&code_challenge_method=S256&state=state&interaction_mode=signUp"
         )
 
     async def test_signOut(
@@ -106,7 +106,7 @@ class TestOAuthClient:
             method="get",
             json={
                 **mockProviderMetadata.__dict__,
-                "end_session_endpoint": "https://OAuth.app/oidc/logout",
+                "end_session_endpoint": "https://logto.app/oidc/logout",
             },
         )
 
@@ -118,7 +118,7 @@ class TestOAuthClient:
 
         assert (
             url
-            == "https://OAuth.app/oidc/logout?client_id=replace-with-your-app-id&post_logout_redirect_uri=redirectUri"
+            == "https://logto.app/oidc/logout?client_id=replace-with-your-app-id&post_logout_redirect_uri=redirectUri"
         )
 
         assert storage.get("idToken") is None
@@ -218,19 +218,19 @@ class TestOAuthClient:
 
         assert storage.get("idToken") == "idToken"
         assert storage.get("refreshToken") == "refreshToken"
-        assert await client.getAccessToken() == "accessToken"
+        assert await client.getAccessToken("") == "accessToken"
 
     async def test_getAccessToken_cached(
         self,
         client: OAuthClient,
         storage: Storage,
     ) -> None:
-        assert await client.getAccessToken() == None
+        assert await client.getAccessToken("") == None
         storage.set(
             "accessTokenMap",
             '{"x":{"":{"token":"access_token","expiresAt": 9999999999}, "foo":{"token":"access_token_foo","expiresAt": 9999999999}}}',
         )
-        assert await client.getAccessToken() == "access_token"
+        assert await client.getAccessToken("") == "access_token"
         assert await client.getAccessToken(resource="foo") == "access_token_foo"
 
     async def test_getAccessToken_noRefreshToken(
@@ -240,7 +240,7 @@ class TestOAuthClient:
     ) -> None:
         storage.set("accessTokenMap", '{"x":{}}')
         storage.set("refreshToken", None)
-        assert await client.getAccessToken() == None
+        assert await client.getAccessToken("") == None
 
     async def test_getAccessToken_useRefreshToken(
         self,
@@ -261,7 +261,7 @@ class TestOAuthClient:
         )
         mockRequest(method="post", json=tokenResponse.__dict__)
 
-        assert await client.getAccessToken() == "accessToken"
+        assert await client.getAccessToken("") == "accessToken"
 
     async def test_getAccessTokenClaims(
         self, client: OAuthClient, storage: Storage
@@ -274,8 +274,8 @@ class TestOAuthClient:
         )
 
         assert await client.getAccessTokenClaims() == AccessTokenClaims(
-            iss="https://OAuth.app",
-            aud="https://OAuth.app/api",
+            iss="https://logto.app",
+            aud="https://logto.app/api",
             exp=9999999999,
             iat=1616446300,
             sub="user1",
@@ -298,7 +298,7 @@ class TestOAuthClient:
         idTokenString = "eyJhbGciOiJSUzI1NiIsImtpZCI6IjEifQ.eyJpc3MiOiJodHRwczovL2xvZ3RvLmFwcCIsImF1ZCI6ImZvbyIsImV4cCI6MTYxNjQ0NjQwMCwiaWF0IjoxNjE2NDQ2MzAwLCJzdWIiOiJ1c2VyMSIsIm5hbWUiOiJKb2huIFdpY2siLCJ1c2VybmFtZSI6ImpvaG4iLCJlbWFpbCI6ImpvaG5Ad2ljay5jb20iLCJlbWFpbF92ZXJpZmllZCI6dHJ1ZX0.12345678901234567890123456789012345678901234567890"
         storage.set("idToken", idTokenString)
         assert client.getIdTokenClaims() == IdTokenClaims(
-            iss="https://OAuth.app",
+            iss="https://logto.app",
             aud="foo",
             exp=1616446400,
             iat=1616446300,

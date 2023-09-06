@@ -1,5 +1,5 @@
 """
-The core OIDC functions for the OAuth client. Provider-agonistic functions
+The core OIDC functions for the OAuth Client. Provider-agonistic functions
 are implemented as static methods, while other functions are implemented as
 instance methods.
 """
