@@ -25,6 +25,7 @@ class OAuthConfig(BaseModel):
     The configuration object for the OAuth Client.
     """
 
+    wellKnownMetaDataEndpoint: str
     endpoint: str
     """
     The endpoint for the OAuth Server, you can get it from the integration guide
@@ -149,7 +150,10 @@ class OAuthClient:
         the ID token, fetch tokens by code or refresh token, etc.
         """
 
-        metadata = await OAuthCore.getProviderMetadata(f"{self.config.endpoint}/oidc/.well-known/openid-configuration")
+        if self.config.wellKnownMetaDataEndpoint:
+            metadata = await OAuthCore.getProviderMetadata(f"{self.config.wellKnownMetaDataEndpoint}")
+        else:    
+            metadata = await OAuthCore.getProviderMetadata(f"{self.config.endpoint}/oidc/.well-known/openid-configuration")
 
         metadata.userlist_endpoint = self.config.endpoint + "/api/users"
 
@@ -230,9 +234,8 @@ class OAuthClient:
         authorizationEndpoint = (
             await self.getOidcCore()
         ).metadata.authorization_endpoint
-        query = urllib.parse.urlencode(
-            removeFalsyKeys(
-                {
+
+        params = {
                     "client_id": appId,
                     "redirect_uri": redirectUri,
                     "response_type": "code",
@@ -240,16 +243,26 @@ class OAuthClient:
                         (item.value if isinstance(item, Scope) else item)
                         for item in (scopes + OAuthCore.defaultScopes)
                     ),
-                    "resource": resources,
                     "prompt": prompt,
                     "code_challenge": codeChallenge,
                     "code_challenge_method": "S256",
                     "state": state,
                     "interaction_mode": interactionMode,
                 }
-            ),
+        
+        resources = [res for res in resources if res != None and res.strip() != ""]
+
+        if len(resources) > 0:
+            print("Including resources in SignIn Url " + str(resources))
+            params["resource"] = resources
+        else:
+            print("Exluding resources")
+
+        query = urllib.parse.urlencode(
+            removeFalsyKeys(params),
             True,
         )
+
         return f"{authorizationEndpoint}?{query}"
 
     def _getSignInSession(self, callerArgs: dict = {}) -> Optional[SignInSession]:

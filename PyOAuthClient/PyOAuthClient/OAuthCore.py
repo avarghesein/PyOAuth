@@ -105,14 +105,18 @@ class OAuthCore:
             """
             tokenEndpoint = self.metadata.token_endpoint
 
-            with httpx.Client(http2=True, verify=False) as session:
-                response = session.post(tokenEndpoint, json={
+            json = {
                         "grant_type": "client_credentials",
                         "client_id": clientId,
                         "client_secret": clientSecret,
-                        "resource": resourceUri,
                         'scope': scope
-                    })
+                    }
+
+            if resourceUri and resourceUri.strip() != "":
+                json["resource"] = resourceUri
+
+            with httpx.Client(http2=True, verify=False) as session:
+                response = session.post(tokenEndpoint, json=removeFalsyKeys(json))
                 
                 if response.status_code != 200:
                     raise OAuthException(response.text)
@@ -133,18 +137,21 @@ class OAuthCore:
         """
         tokenEndpoint = self.metadata.token_endpoint
 
-        with httpx.Client(http2=True, verify=False) as session:
-            response = session.post(tokenEndpoint, json={
+        params = { 
                     "grant_type": "authorization_code",
                     "client_id": clientId,
                     "client_secret": clientSecret,
                     "redirect_uri": redirectUri,
                     "code": code,
                     "code_verifier": codeVerifier,
-                })
-            
+                }
+        
+        with httpx.Client(http2=True, verify=False) as session:
+            response = session.post(tokenEndpoint, data=params)            
             if response.status_code != 200:
-                raise OAuthException(response.text)
+                response = session.post(tokenEndpoint, json=params)
+                if response.status_code != 200:
+                    raise OAuthException(response.text)
             
             jsonData = response.json()
             return TokenResponse(**jsonData)
@@ -161,15 +168,18 @@ class OAuthCore:
         """
         tokenEndpoint = self.metadata.token_endpoint
 
+        json = {
+                    "grant_type": "refresh_token",
+                    "client_id": clientId,
+                    "client_secret": clientSecret,
+                    "refresh_token": refreshToken
+                }
+
+        if resource and resource.strip() != "":
+            json["resource"] = resource
+
         with httpx.Client(http2=True, verify=False) as session:
-            response = session.post(tokenEndpoint, json=removeFalsyKeys(
-                    {
-                        "grant_type": "refresh_token",
-                        "client_id": clientId,
-                        "client_secret": clientSecret,
-                        "refresh_token": refreshToken,
-                        "resource": resource,
-                    }))
+            response = session.post(tokenEndpoint, json=removeFalsyKeys(json))
             
             if response.status_code != 200:
                 raise OAuthException(response.text)

@@ -1,3 +1,17 @@
+wellKnownMetaDataEndpoint="<Your OAuth Well Known Meta Data End Point> i.e ../.well-known/openid-configuration"
+#Or provide
+endpoint="<Your OAuth End Point>"
+
+appId="<Your OAuth ADMIN APP ID>"
+appSecret="<Your OAuth ADMIN APP Secret>"
+#Works with Logto. Keep empty string for Azure AD OAuth
+resource="https://default.logto.app/api or <Your Admin Appliction Resource Url>"
+
+#Works with Logto. Keep Empty strings for Azure AD OAuth
+appIdAdmin="<Your OAuth APP ID>"
+appSecretAdmin="<Your OAuth APP Secret>"
+resourceAdmin="https://default.logto.app/api or <Your Admin Appliction Resource Url>"
+
 import os
 
 from typing import Dict, Literal, Optional
@@ -33,11 +47,12 @@ class SessionStorage(Storage):
 
 adminClient = OAuthClient(
     OAuthConfig(
-        endpoint="<Your OAuth End Point>",
-        appId="<Your OAuth ADMIN APP ID>",
-        appSecret="<Your OAuth ADMIN APP Secret>",
+        wellKnownMetaDataEndpoint=wellKnownMetaDataEndpoint,
+        endpoint=endpoint,
+        appId=appIdAdmin,
+        appSecret=appSecretAdmin,
         resources=[
-            "https://default.logto.app/api or <Your Admin Appliction Resource Url>",
+            resourceAdmin,
         ],  # Remove if you don't need to access the default OAuth API
         scopes=["all"],
     ),
@@ -46,11 +61,12 @@ adminClient = OAuthClient(
 
 client = OAuthClient(
     OAuthConfig(
-        endpoint="<Your OAuth End Point>",
-        appId="<Your OAuth ADMIN APP ID>",
-        appSecret="<Your OAuth ADMIN APP Secret>",
+        wellKnownMetaDataEndpoint=wellKnownMetaDataEndpoint,
+        endpoint=endpoint,
+        appId=appId,
+        appSecret=appSecret,
         resources=[
-            "<Your Appliction Resource Url>",
+            resource,
         ],  # Remove if you don't need to access the default OAuth API
         scopes=["email","custom_data", "chat:collection"],
     ),
@@ -67,7 +83,7 @@ async def index(request: Request):
 
         content = ""
         
-        userList = await adminClient.fetchUserList("<Your Admin Appliction Resource Url>",callerArgs)
+        userList = await adminClient.fetchUserList(resourceAdmin,callerArgs)
 
         if client.isAuthenticated(callerArgs = callerArgs) is False:
             content = "Not authenticated <a href='/signin'>Sign in</a>"
@@ -81,7 +97,7 @@ async def index(request: Request):
             + str(userList)
             + "<br>"
             + (
-                await client.getAccessTokenClaims("<Your Appliction Resource Url>",callerArgs)
+                await client.getAccessTokenClaims(resource,callerArgs)
             ).model_dump_json(exclude_unset=True)
             + "<br><a href='/sign-out'>Sign out</a>")
     except OAuthException as e:
