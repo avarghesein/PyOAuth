@@ -100,17 +100,17 @@ class IdTokenClaims(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    iss: str
+    iss: Optional[str] = None
     """The issuer identifier for whom issued the token."""
-    sub: str
+    sub: Optional[str] = None
     """The subject identifier for whom the token is intended (user ID)."""
-    aud: str
+    aud: Optional[str] = None
     """
     The audience that the token is intended for, which is the client ID.
     """
-    exp: int
+    exp: Optional[int] = None
     """The expiration time of the token (in seconds)."""
-    iat: int
+    iat: Optional[int] = None
     """The time at which the token was issued (in seconds)."""
     at_hash: Optional[str] = None
     name: Optional[str] = None
@@ -139,28 +139,28 @@ class AccessTokenClaims(BaseModel):
 
     model_config = ConfigDict(extra="allow")
 
-    iss: str
+    iss: Optional[str] = None
     """
     The issuer identifier for whom issued the token.
     """
-    sub: str
+    sub: Optional[str] = None
     """
     The subject identifier for whom the token is intended (user ID).
     """
-    aud: str
+    aud: Optional[str] = None
     """
     The audience that the token is intended for, which is the client ID or the resource
     indicator.
     """
-    exp: int
+    exp: Optional[int] = None
     """
     The expiration time of the token (in seconds).
     """
-    iat: int
+    iat: Optional[int] = None
     """
     The time at which the token was issued (in seconds).
     """
-    scope: str
+    scope: Optional[str] = None
     """
     The scopes that the token is granted for.
     """

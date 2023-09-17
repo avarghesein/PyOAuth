@@ -172,6 +172,9 @@ class OAuthClient:
         except:
             return AccessTokenMap(x={})
 
+    def SetAccessTokenForExternalCallers(self, accessToken: str, resource: str = "", expiresIn: int = 86400, callerArgs: dict = {}) -> None:
+        self._setAccessToken(resource, accessToken, expiresIn, callerArgs)
+
     def _setAccessToken(self, resource: str, accessToken: str, expiresIn: int, callerArgs: dict = {}) -> None:
         """
         Set the access token for the given resource to storage.
