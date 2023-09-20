@@ -491,6 +491,14 @@ class OAuthClient:
         """
         return self._storage.get("idToken", callerArgs) is not None
 
+    async def IsAccessTokenValid(self, callerArgs: dict = {}):
+        try:
+            userInfo = await self.fetchUserInfo(callerArgs)
+            return True, userInfo
+        except Exception as eX:
+            return False, str(eX)
+    
+    
     async def fetchUserInfo(self, callerArgs: dict = {}) -> UserInfoResponse:
         """
         Fetch the user information from the UserInfo endpoint. If the access token
