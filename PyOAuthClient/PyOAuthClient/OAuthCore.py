@@ -200,26 +200,35 @@ class OAuthCore:
             resp = client.get(jwksUri)
             if resp.status_code != 200:
                 raise OAuthException(resp.text)
-            jskey = resp.json()
+            jskeys = resp.json()
 
         from jwcrypto import jwk
         import json
-        jskey=jskey["keys"][0]
 
-        key = jwk.JWK(**jskey)
-        public_key=key.export_to_pem()
-        print(public_key)
+        for jsKey in jskeys["keys"]:
+            key = jwk.JWK(**jsKey)
+            public_key=key.export_to_pem()
+            print(public_key)
 
-        jwt.decode(
-            idToken,
-            #signing_key.key,
-            public_key,
-            algorithms=["RS256", "PS256", "ES256", "ES384", "ES512"],
-            audience=clientId,
-            issuer=issuer,
-            leeway=30,
-            verify=False
-        )
+            try:
+
+                jwt.decode(
+                    idToken,
+                    #signing_key.key,
+                    public_key,
+                    algorithms=["RS256", "PS256", "ES256", "ES384", "ES512"],
+                    audience=clientId,
+                    issuer=issuer,
+                    leeway=30,
+                    verify=False
+                )
+
+                return True
+
+            except:
+                pass
+        
+        return False
 
     async def fetchUserList(self, accessToken: str):
             """
